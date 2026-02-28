@@ -36,6 +36,7 @@ bld/
 [Bb]in/
 # Also match Windows-style paths (backslash-prefixed) emitted by EF Core tooling on Linux
 bin\*/
+**/bin\*/
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/

@@ -21,4 +21,8 @@
       <ProjectReference Include="..\PaymentService.Domain\PaymentService.Domain.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <InternalsVisibleTo Include="PaymentService.Application.Tests" />
+    </ItemGroup>
+
 </Project>

@@ -5,6 +5,7 @@ using PaymentService.Application.Auth.Interfaces;
 using PaymentService.Application.Common;
 using PaymentService.Application.Features.Payments.Services;
 using PaymentService.Infrastructure.Auth;
+using PaymentService.Infrastructure.Outbox;
 using PaymentService.Infrastructure.Payments;
 using PaymentService.Infrastructure.Persistence;
 
@@ -38,6 +39,10 @@ public static class InfrastructureServiceExtensions
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
         services.AddSingleton<IRefreshTokenGenerator, RefreshTokenGenerator>();
+
+        // Outbox
+        services.AddScoped<IIntegrationEventPublisher, LoggingIntegrationEventPublisher>();
+        services.AddHostedService<OutboxProcessor>();
 
         return services;
     }
