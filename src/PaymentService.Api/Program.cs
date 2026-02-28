@@ -1,6 +1,13 @@
+using System.Text;
 using FluentValidation;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using PaymentService.Api.Auth;
 using PaymentService.Api.Endpoints;
+using PaymentService.Application;
+using PaymentService.Application.Auth.Interfaces;
 using PaymentService.Infrastructure;
+using PaymentService.Infrastructure.Auth;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -30,9 +37,6 @@ try
 
     // Register Application layer (use-cases, validators)
     builder.Services.AddApplication();
-
-// Register Infrastructure (EF Core + PostgreSQL + JWT services)
-    builder.Services.AddInfrastructure(builder.Configuration);
 
 // Current user service reads from HttpContext
     builder.Services.AddHttpContextAccessor();
