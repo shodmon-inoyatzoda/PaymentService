@@ -2,8 +2,8 @@
 
 public sealed class UserRole
 {
-    public int UserId { get; private set; }
-    public int RoleId { get; private set; }
+    public Guid UserId { get; private set; }
+    public Guid RoleId { get; private set; }
     public DateTimeOffset AssignedAt { get; private set; }
 
     public User User { get; private set; } = null!;
@@ -12,14 +12,14 @@ public sealed class UserRole
 
     private UserRole() { }
 
-    private UserRole(int userId, int roleId)
+    private UserRole(Guid userId, Guid roleId)
     {
         UserId = userId;
         RoleId = roleId;
         AssignedAt = DateTimeOffset.UtcNow;
     }
 
-    public static UserRole Create(int userId, int roleId)
+    public static UserRole Create(Guid userId, Guid roleId)
     {
         return new UserRole(userId, roleId);
     }
