@@ -14,4 +14,51 @@ public class Payment : BaseEntity
 
     public Order Order { get; private set; } = null!;
     public User User { get; private set; } = null!;
+    
+    public Payment()
+    {
+    }
+    
+    private Payment(Guid orderId, Guid userId, decimal amount, PaymentStatus status)
+    {
+        OrderId = orderId;
+        UserId = userId;
+        Amount = amount;
+        Status = status;
+    }
+    
+    public static Result<Payment> Create(Guid orderId, Guid userId, decimal amount)
+    {
+        var payment = new Payment
+        {
+            OrderId = orderId,
+            UserId = userId,
+            Amount = amount,
+            Status = PaymentStatus.Pending
+        };
+
+        return Result.Success(payment);
+    }
+    
+    public Result MarkAsCompleted()
+    {
+        if (Status != PaymentStatus.Pending)
+        {
+            return Result.Failure(Error.Conflict("Payment.Status", "Only payments in 'Pending' status can be marked as completed."));
+        }
+
+        Status = PaymentStatus.Successful;
+        return Result.Success();
+    }
+    
+    public Result MarkAsFailed()
+    {
+        if (Status != PaymentStatus.Pending)
+        {
+            return Result.Failure(Error.Conflict("Payment.Status", "Only payments in 'Pending' status can be marked as failed."));
+        }
+
+        Status = PaymentStatus.Failed;
+        return Result.Success();
+    }
 }
