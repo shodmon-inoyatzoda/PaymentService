@@ -6,7 +6,9 @@
     <!-- Production packages -->
     <PackageVersion Include="BCrypt.Net-Next" Version="4.1.0" />
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.3" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.3" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
     <!-- Test packages -->
     <PackageVersion Include="coverlet.collector" Version="8.0.0" />
     <PackageVersion Include="FluentAssertions" Version="8.8.0" />
