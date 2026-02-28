@@ -6,6 +6,7 @@
     <Project Path="src/PaymentService.Infrastructure/PaymentService.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="src/tests/PaymentService.Api.Tests/PaymentService.Api.Tests.csproj" />
     <Project Path="src/tests/PaymentService.Domain.Tests/PaymentService.Domain.Tests.csproj" />
     <Project Path="src/tests/PaymentService.Application.Tests/PaymentService.Application.Tests.csproj" />
   </Folder>
