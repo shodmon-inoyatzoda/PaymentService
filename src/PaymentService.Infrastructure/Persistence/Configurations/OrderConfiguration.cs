@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using PaymentService.Domain.Entities.Orders;
-using PaymentService.Domain.Enums.Orders;
 
 namespace PaymentService.Infrastructure.Persistence.Configurations;
 
