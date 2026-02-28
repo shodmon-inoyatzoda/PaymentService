@@ -29,14 +29,8 @@ public class Payment : BaseEntity
     
     public static Result<Payment> Create(Guid orderId, Guid userId, decimal amount)
     {
-        var payment = new Payment
-        {
-            OrderId = orderId,
-            UserId = userId,
-            Amount = amount,
-            Status = PaymentStatus.Pending
-        };
-
+        var payment = new Payment(orderId, userId, amount, PaymentStatus.Pending);
+        
         return Result.Success(payment);
     }
     
