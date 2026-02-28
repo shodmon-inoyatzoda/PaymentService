@@ -5,4 +5,8 @@
     <Project Path="src/PaymentService.Domain/PaymentService.Domain.csproj" />
     <Project Path="src/PaymentService.Infrastructure/PaymentService.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="src/tests/PaymentService.Domain.Tests/PaymentService.Domain.Tests.csproj" />
+    <Project Path="src/tests/PaymentService.Application.Tests/PaymentService.Application.Tests.csproj" />
+  </Folder>
 </Solution>
