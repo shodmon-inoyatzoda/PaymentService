@@ -19,7 +19,6 @@ internal sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(o => o.UserId)
             .HasColumnName("user_id");
 
-        // Status stored as string for readability in the database
         builder.Property(o => o.Status)
             .HasColumnName("status")
             .HasConversion<string>()
@@ -32,7 +31,6 @@ internal sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(o => o.UpdatedAt)
             .HasColumnName("updated_at");
 
-        // Money value object mapped as owned entity (two columns: amount + currency)
         builder.OwnsOne(o => o.Money, money =>
         {
             money.Property(m => m.Amount)
@@ -46,7 +44,6 @@ internal sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
                 .IsRequired();
         });
 
-        // Index on foreign key user_id
         builder.HasIndex(o => o.UserId);
 
         builder.HasMany(o => o.Payments)
@@ -54,7 +51,6 @@ internal sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
             .HasForeignKey(p => p.OrderId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Relationship to User is configured in UserConfiguration via navigation.
         builder.HasOne(o => o.User)
             .WithMany()
             .HasForeignKey(o => o.UserId)
