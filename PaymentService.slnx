@@ -1,8 +1,12 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="PaymentService.Api/PaymentService.Api.csproj" />
-    <Project Path="PaymentService.Application/PaymentService.Application.csproj" />
-    <Project Path="PaymentService.Domain/PaymentService.Domain.csproj" />
-    <Project Path="PaymentService.Infrastructure/PaymentService.Infrastructure.csproj" />
+    <Project Path="src/PaymentService.Api/PaymentService.Api.csproj" />
+    <Project Path="src/PaymentService.Application/PaymentService.Application.csproj" />
+    <Project Path="src/PaymentService.Domain/PaymentService.Domain.csproj" />
+    <Project Path="src/PaymentService.Infrastructure/PaymentService.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="src/tests/PaymentService.Domain.Tests/PaymentService.Domain.Tests.csproj" />
+    <Project Path="src/tests/PaymentService.Application.Tests/PaymentService.Application.Tests.csproj" />
   </Folder>
 </Solution>
