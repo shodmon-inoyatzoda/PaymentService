@@ -1,9 +1,14 @@
 using FluentValidation;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using PaymentService.Application.Auth;
 using PaymentService.Application.Auth.DTOs;
 using PaymentService.Application.Auth.Interfaces;
+using PaymentService.Application.Features.Auth.Commands.Login;
+using PaymentService.Application.Features.Auth.Commands.RefreshToken;
+using PaymentService.Application.Features.Auth.Commands.Register;
+using PaymentService.Application.Features.Auth.Commands.RevokeToken;
+using PaymentService.Application.Features.Auth.Queries.GetCurrentUser;
 using PaymentService.Domain.Common;
 
 namespace PaymentService.Api.Controllers;
@@ -12,20 +17,20 @@ namespace PaymentService.Api.Controllers;
 [Route("api/auth")]
 public sealed class AuthController : ControllerBase
 {
-    private readonly IAuthService _authService;
+    private readonly ISender _sender;
     private readonly ICurrentUserService _currentUserService;
     private readonly IValidator<RegisterRequest> _registerValidator;
     private readonly IValidator<LoginRequest> _loginValidator;
     private readonly IValidator<RefreshTokenRequest> _refreshValidator;
 
     public AuthController(
-        IAuthService authService,
+        ISender sender,
         ICurrentUserService currentUserService,
         IValidator<RegisterRequest> registerValidator,
         IValidator<LoginRequest> loginValidator,
         IValidator<RefreshTokenRequest> refreshValidator)
     {
-        _authService = authService;
+        _sender = sender;
         _currentUserService = currentUserService;
         _registerValidator = registerValidator;
         _loginValidator = loginValidator;
@@ -45,8 +50,14 @@ public sealed class AuthController : ControllerBase
         if (!validation.IsValid)
             return ValidationProblem(validation);
 
-        var ip = GetIpAddress();
-        var result = await _authService.RegisterAsync(request, ip, cancellationToken);
+        var command = new RegisterCommand(
+            request.PhoneNumber,
+            request.Email,
+            request.FullName,
+            request.Password,
+            GetIpAddress());
+
+        var result = await _sender.Send(command, cancellationToken);
         return result.IsSuccess
             ? CreatedAtAction(nameof(Me), result.Value)
             : MapError(result.Error);
@@ -65,8 +76,8 @@ public sealed class AuthController : ControllerBase
         if (!validation.IsValid)
             return ValidationProblem(validation);
 
-        var ip = GetIpAddress();
-        var result = await _authService.LoginAsync(request, ip, cancellationToken);
+        var command = new LoginCommand(request.PhoneNumber, request.Password, GetIpAddress());
+        var result = await _sender.Send(command, cancellationToken);
         return result.IsSuccess ? Ok(result.Value) : MapError(result.Error);
     }
 
@@ -83,8 +94,8 @@ public sealed class AuthController : ControllerBase
         if (!validation.IsValid)
             return ValidationProblem(validation);
 
-        var ip = GetIpAddress();
-        var result = await _authService.RefreshTokenAsync(request, ip, cancellationToken);
+        var command = new RefreshTokenCommand(request.RefreshToken, GetIpAddress());
+        var result = await _sender.Send(command, cancellationToken);
         return result.IsSuccess ? Ok(result.Value) : MapError(result.Error);
     }
 
@@ -101,8 +112,8 @@ public sealed class AuthController : ControllerBase
         if (string.IsNullOrWhiteSpace(request.RefreshToken))
             return BadRequest(new { message = "Refresh token is required." });
 
-        var ip = GetIpAddress();
-        var result = await _authService.RevokeTokenAsync(request, ip, cancellationToken);
+        var command = new RevokeTokenCommand(request.RefreshToken, GetIpAddress());
+        var result = await _sender.Send(command, cancellationToken);
         return result.IsSuccess ? NoContent() : MapError(result.Error);
     }
 
@@ -117,7 +128,8 @@ public sealed class AuthController : ControllerBase
         if (userId is null)
             return Unauthorized();
 
-        var result = await _authService.GetCurrentUserAsync(userId.Value, cancellationToken);
+        var query = new GetCurrentUserQuery(userId.Value);
+        var result = await _sender.Send(query, cancellationToken);
         return result.IsSuccess ? Ok(result.Value) : MapError(result.Error);
     }
 

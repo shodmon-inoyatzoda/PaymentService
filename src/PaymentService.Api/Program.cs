@@ -8,6 +8,7 @@ using PaymentService.Application;
 using PaymentService.Application.Auth.Interfaces;
 using PaymentService.Infrastructure;
 using PaymentService.Infrastructure.Auth;
+using Scalar.AspNetCore;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -35,17 +36,17 @@ try
     // Register FluentValidation validators from Api assembly
     builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
-    // Register Application layer (use-cases, validators)
+    // Register Application layer (CQRS handlers via MediatR, validators)
     builder.Services.AddApplication();
 
-// Current user service reads from HttpContext
+    // Current user service reads from HttpContext
     builder.Services.AddHttpContextAccessor();
     builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
-// Controllers
+    // Controllers
     builder.Services.AddControllers();
 
-// JWT Authentication
+    // JWT Authentication
     var jwtSettings = builder.Configuration
                           .GetSection(JwtSettings.SectionName)
                           .Get<JwtSettings>()
@@ -83,10 +84,19 @@ try
     if (app.Environment.IsDevelopment())
     {
         app.MapOpenApi();
+        app.MapScalarApiReference(options =>
+        {
+            options.Title = "PaymentService API";
+            options.Theme = ScalarTheme.Purple;
+        });
     }
 
     app.UseHttpsRedirection();
 
+    app.UseAuthentication();
+    app.UseAuthorization();
+
+    app.MapControllers();
     app.MapHealthEndpoints();
     app.MapSampleEndpoints();
 

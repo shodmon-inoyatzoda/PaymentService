@@ -5,6 +5,8 @@
   <ItemGroup>
     <!-- Production packages -->
     <PackageVersion Include="BCrypt.Net-Next" Version="4.1.0" />
+    <PackageVersion Include="MediatR" Version="14.0.0" />
+    <PackageVersion Include="Scalar.AspNetCore" Version="2.12.50" />
     <PackageVersion Include="FluentValidation" Version="12.1.1" />
     <PackageVersion Include="FluentValidation.AspNetCore" Version="11.3.1" />
     <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
