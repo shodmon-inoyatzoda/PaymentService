@@ -6,13 +6,9 @@ using PaymentService.Domain.Entities.Users;
 
 namespace PaymentService.Infrastructure.Persistence;
 
-public sealed class ApplicationDbContext : DbContext, IApplicationDbContext
+public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+    : DbContext(options), IApplicationDbContext
 {
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-        : base(options)
-    {
-    }
-
     // Identity
     public DbSet<User> Users => Set<User>();
     public DbSet<Role> Roles => Set<Role>();

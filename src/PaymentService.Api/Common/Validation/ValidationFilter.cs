@@ -3,15 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace PaymentService.Api.Common.Validation;
 
-public class ValidationFilter<TRequest> : IEndpointFilter
+public class ValidationFilter<TRequest>(IValidator<TRequest> validator) : IEndpointFilter
 {
-    private readonly IValidator<TRequest> _validator;
-
-    public ValidationFilter(IValidator<TRequest> validator)
-    {
-        _validator = validator;
-    }
-
     public async ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
     {
         var request = context.Arguments.OfType<TRequest>().FirstOrDefault();
@@ -19,7 +12,7 @@ public class ValidationFilter<TRequest> : IEndpointFilter
         if (request is null)
             return await next(context);
 
-        var result = await _validator.ValidateAsync(request, context.HttpContext.RequestAborted);
+        var result = await validator.ValidateAsync(request, context.HttpContext.RequestAborted);
 
         if (!result.IsValid)
         {
@@ -34,8 +27,11 @@ public class ValidationFilter<TRequest> : IEndpointFilter
                 Status = StatusCodes.Status400BadRequest,
                 Title  = "Validation Error",
                 Detail = "One or more validation errors occurred.",
+                Extensions =
+                {
+                    ["errors"] = errors
+                }
             };
-            problem.Extensions["errors"] = errors;
 
             return Results.Problem(problem);
         }

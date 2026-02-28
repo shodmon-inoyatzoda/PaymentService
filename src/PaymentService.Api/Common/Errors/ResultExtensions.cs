@@ -38,8 +38,11 @@ public static class ResultExtensions
             Status = statusCode,
             Title  = GetTitle(error.Type),
             Detail = error.Message,
+            Extensions =
+            {
+                ["errorCode"] = error.Code
+            }
         };
-        problemDetails.Extensions["errorCode"] = error.Code;
 
         return Results.Problem(problemDetails);
     }
