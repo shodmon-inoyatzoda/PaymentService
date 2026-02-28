@@ -51,7 +51,7 @@ public sealed class PasswordHash : ValueObject
         if (!HasDigit(password))
         {
             return Result.Failure<PasswordHash>(
-                Error.Validation("Password. NoDigit", "Password must contain at least one digit"));
+                Error.Validation("Password.NoDigit", "Password must contain at least one digit"));
         }
 
         var hash = BCrypt.Net.BCrypt.HashPassword(password, WorkFactor);
