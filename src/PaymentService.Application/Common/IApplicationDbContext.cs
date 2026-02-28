@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using PaymentService.Application.Idempotency;
 using PaymentService.Domain.Entities.Orders;
 using PaymentService.Domain.Entities.Payments;
 using PaymentService.Domain.Entities.Users;
@@ -18,6 +19,9 @@ public interface IApplicationDbContext
     
     // Payment
     DbSet<Payment> Payments { get; }
+
+    // Idempotency
+    DbSet<IdempotencyKey> IdempotencyKeys { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
