@@ -5,6 +5,7 @@ using PaymentService.Application.Auth.Interfaces;
 using PaymentService.Application.Common;
 using PaymentService.Application.Features.Payments.Services;
 using PaymentService.Infrastructure.Auth;
+using PaymentService.Infrastructure.Payments;
 using PaymentService.Infrastructure.Persistence;
 
 namespace PaymentService.Infrastructure;
@@ -25,6 +26,13 @@ public static class InfrastructureServiceExtensions
             sp.GetRequiredService<ApplicationDbContext>());
 
         services.AddScoped<IOrderLockService, PostgresOrderLockService>();
+
+        // Payment provider: fake implementation wrapped with Polly resilience policies
+        services.Configure<FakeProviderOptions>(
+            configuration.GetSection(FakeProviderOptions.SectionName));
+        services.AddSingleton<FakePaymentProviderClient>();
+        services.AddSingleton<IPaymentProviderClient>(sp =>
+            new ResilientPaymentProviderClient(sp.GetRequiredService<FakePaymentProviderClient>()));
 
         // Auth
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));

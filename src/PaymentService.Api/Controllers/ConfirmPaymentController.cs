@@ -144,6 +144,7 @@ public sealed class ConfirmPaymentController : ControllerBase
         ErrorType.Conflict => Conflict(new { error.Code, error.Message }),
         ErrorType.Unauthorized => Unauthorized(new { error.Code, error.Message }),
         ErrorType.Forbidden => Forbid(),
+        ErrorType.ServiceUnavailable => StatusCode(StatusCodes.Status503ServiceUnavailable, new { error.Code, error.Message }),
         _ => StatusCode(StatusCodes.Status500InternalServerError, new { error.Code, error.Message })
     };
 }
