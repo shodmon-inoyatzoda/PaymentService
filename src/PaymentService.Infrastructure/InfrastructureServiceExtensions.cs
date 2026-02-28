@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PaymentService.Application.Auth.Interfaces;
 using PaymentService.Application.Common;
+using PaymentService.Application.Features.Payments.Services;
 using PaymentService.Infrastructure.Auth;
 using PaymentService.Infrastructure.Persistence;
 
@@ -22,6 +23,8 @@ public static class InfrastructureServiceExtensions
 
         services.AddScoped<IApplicationDbContext>(sp =>
             sp.GetRequiredService<ApplicationDbContext>());
+
+        services.AddScoped<IOrderLockService, PostgresOrderLockService>();
 
         // Auth
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));

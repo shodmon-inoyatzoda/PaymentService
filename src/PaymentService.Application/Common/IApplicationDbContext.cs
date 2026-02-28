@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using PaymentService.Application.Idempotency;
 using PaymentService.Domain.Entities.Orders;
 using PaymentService.Domain.Entities.Payments;
@@ -22,6 +23,8 @@ public interface IApplicationDbContext
 
     // Idempotency
     DbSet<IdempotencyKey> IdempotencyKeys { get; }
+
+    DatabaseFacade Database { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
