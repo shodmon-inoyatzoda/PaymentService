@@ -11,6 +11,7 @@ using PaymentService.Domain.Entities.Orders;
 using PaymentService.Domain.Entities.Users;
 using PaymentService.Domain.Enums.Orders;
 using PaymentService.Domain.Enums.Payments;
+using PaymentService.Infrastructure.Payments;
 using PaymentService.Infrastructure.Persistence;
 using NSubstitute;
 
@@ -86,8 +87,12 @@ public class ConfirmPaymentHandlerTests : IDisposable
         return result.Value.Id;
     }
 
-    private ConfirmPaymentCommandHandler CreateHandler() =>
-        new(CreateContext(), _noOpLockService);
+    /// <summary>Creates a handler with an always-succeeding provider by default.</summary>
+    private ConfirmPaymentCommandHandler CreateHandler(IPaymentProviderClient? provider = null)
+    {
+        provider ??= new FakePaymentProviderClient(new FakeProviderOptions { SuccessRate = 1.0 });
+        return new ConfirmPaymentCommandHandler(CreateContext(), _noOpLockService, provider);
+    }
 
     // ─────────────────────────────── ConfirmPayment ───
 
@@ -258,5 +263,60 @@ public class ConfirmPaymentHandlerTests : IDisposable
         var successfulCount = await ctx.Payments
             .CountAsync(p => p.OrderId == order.Id && p.Status == PaymentStatus.Successful);
         successfulCount.Should().Be(1);
+    }
+
+    // ─────────────────────────── Provider resilience ───
+
+    [Fact]
+    public async Task ConfirmPayment_WhenProviderUnavailable_ReturnsServiceUnavailableAndMarksFailed()
+    {
+        var userId = await RegisterUserAsync();
+        var order = await CreateOrderAsync(userId);
+        var paymentId = await CreatePaymentAsync(userId, order.Id);
+
+        // Wrap in the resilient client (as it is in production) so Polly catches the exception
+        var unavailableProvider = new ResilientPaymentProviderClient(
+            new FakePaymentProviderClient(new FakeProviderOptions { AlwaysUnavailable = true }));
+
+        var result = await CreateHandler(unavailableProvider).Handle(
+            new ConfirmPaymentCommand(userId, paymentId),
+            CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Type.Should().Be(ErrorType.ServiceUnavailable);
+
+        // Payment must have been marked as Failed; order stays Created
+        var ctx = CreateContext();
+        var dbPayment = await ctx.Payments.FindAsync(paymentId);
+        dbPayment!.Status.Should().Be(PaymentStatus.Failed);
+
+        var dbOrder = await ctx.Orders.FindAsync(order.Id);
+        dbOrder!.Status.Should().Be(OrderStatus.Created);
+    }
+
+    [Fact]
+    public async Task ConfirmPayment_WhenProviderDeclines_ReturnsFailureAndMarksFailed()
+    {
+        var userId = await RegisterUserAsync();
+        var order = await CreateOrderAsync(userId);
+        var paymentId = await CreatePaymentAsync(userId, order.Id);
+
+        var decliningProvider = new FakePaymentProviderClient(
+            new FakeProviderOptions { AlwaysDecline = true });
+
+        var result = await CreateHandler(decliningProvider).Handle(
+            new ConfirmPaymentCommand(userId, paymentId),
+            CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Type.Should().Be(ErrorType.Failure);
+
+        // Payment must be Failed; order stays Created
+        var ctx = CreateContext();
+        var dbPayment = await ctx.Payments.FindAsync(paymentId);
+        dbPayment!.Status.Should().Be(PaymentStatus.Failed);
+
+        var dbOrder = await ctx.Orders.FindAsync(order.Id);
+        dbOrder!.Status.Should().Be(OrderStatus.Created);
     }
 }

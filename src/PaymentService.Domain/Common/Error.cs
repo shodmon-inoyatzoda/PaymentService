@@ -27,6 +27,8 @@ public class Error
     public static Error Forbidden(string code, string message) => new(code, message, ErrorType.Forbidden);
 
     public static Error Failure(string code, string message) => new(code, message, ErrorType.Failure);
+
+    public static Error ServiceUnavailable(string code, string message) => new(code, message, ErrorType.ServiceUnavailable);
 }
 
 public enum ErrorType
@@ -37,5 +39,6 @@ public enum ErrorType
     Conflict,
     Unauthorized,
     Forbidden,
-    Failure
+    Failure,
+    ServiceUnavailable
 }

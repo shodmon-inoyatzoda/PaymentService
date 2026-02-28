@@ -14,11 +14,16 @@ public sealed class ConfirmPaymentCommandHandler : IRequestHandler<ConfirmPaymen
 {
     private readonly IApplicationDbContext _db;
     private readonly IOrderLockService _lockService;
+    private readonly IPaymentProviderClient _providerClient;
 
-    public ConfirmPaymentCommandHandler(IApplicationDbContext db, IOrderLockService lockService)
+    public ConfirmPaymentCommandHandler(
+        IApplicationDbContext db,
+        IOrderLockService lockService,
+        IPaymentProviderClient providerClient)
     {
         _db = db;
         _lockService = lockService;
+        _providerClient = providerClient;
     }
 
     public async Task<Result<PaymentDto>> Handle(
@@ -39,7 +44,36 @@ public sealed class ConfirmPaymentCommandHandler : IRequestHandler<ConfirmPaymen
             return Result.Failure<PaymentDto>(
                 Error.NotFound("Payment.NotFound", $"Payment '{command.PaymentId}' was not found."));
 
-        // 2. Begin transaction and attempt atomic confirmation
+        // 2. Call provider OUTSIDE the database transaction to keep DB locks short.
+        //    The resilient client handles timeout / retry / circuit-breaker internally and
+        //    always returns a ProviderChargeResult (never throws).
+        var chargeRequest = new ProviderChargeRequest(
+            payment.Id,
+            payment.OrderId,
+            payment.Amount,
+            payment.Currency);
+
+        var chargeResult = await _providerClient.ChargeAsync(chargeRequest, cancellationToken);
+
+        if (chargeResult.Status != ProviderChargeStatus.Succeeded)
+        {
+            // Mark the payment as Failed in a short, lock-free transaction
+            await TryMarkPaymentAsFailedAsync(command.PaymentId, cancellationToken);
+
+            return chargeResult.Status switch
+            {
+                ProviderChargeStatus.Unavailable or ProviderChargeStatus.Timeout =>
+                    Result.Failure<PaymentDto>(Error.ServiceUnavailable(
+                        "Provider.Unavailable",
+                        chargeResult.ErrorMessage ?? "Payment provider is currently unavailable.")),
+                _ =>
+                    Result.Failure<PaymentDto>(Error.Failure(
+                        "Provider.Declined",
+                        chargeResult.ErrorMessage ?? "Payment provider declined the charge."))
+            };
+        }
+
+        // 3. Provider succeeded — finalize atomically (lock + re-validate + update)
         try
         {
             return await ExecuteConfirmAsync(payment.OrderId, command.PaymentId, cancellationToken);
@@ -49,6 +83,24 @@ public sealed class ConfirmPaymentCommandHandler : IRequestHandler<ConfirmPaymen
             // Final safety net: partial unique index prevented a double successful payment
             return Result.Failure<PaymentDto>(
                 Error.Conflict("Payment.DoublePayment", "Another payment for this order has already been confirmed."));
+        }
+    }
+
+    /// <summary>
+    /// Marks the payment as Failed in a short lock-free transaction.
+    /// Safe to call even if the payment has already moved out of Pending status.
+    /// </summary>
+    private async Task TryMarkPaymentAsFailedAsync(Guid paymentId, CancellationToken cancellationToken)
+    {
+        await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
+        var payment = await _db.Payments
+            .FirstOrDefaultAsync(p => p.Id == paymentId, cancellationToken);
+
+        if (payment?.Status == PaymentStatus.Pending)
+        {
+            payment.MarkAsFailed();
+            await _db.SaveChangesAsync(cancellationToken);
+            await tx.CommitAsync(cancellationToken);
         }
     }
 
@@ -85,7 +137,7 @@ public sealed class ConfirmPaymentCommandHandler : IRequestHandler<ConfirmPaymen
             return Result.Failure<PaymentDto>(
                 Error.Conflict("Payment.AlreadyConfirmed", "Another payment for this order has already been confirmed."));
 
-        // 6. Simulate provider confirmation (always succeeds) and update statuses atomically
+        // 6. Update statuses atomically
         var paymentResult = trackedPayment.MarkAsCompleted();
         if (paymentResult.IsFailure)
             return Result.Failure<PaymentDto>(paymentResult.Error);
