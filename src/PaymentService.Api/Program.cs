@@ -110,3 +110,6 @@ finally
 {
     Log.CloseAndFlush();
 }
+
+// Expose Program to integration test projects
+public partial class Program { }
