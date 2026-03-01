@@ -3,6 +3,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using PaymentService.Api.Auth;
+using PaymentService.Api.Common;
 using PaymentService.Api.Endpoints;
 using PaymentService.Application;
 using PaymentService.Application.Auth.Interfaces;
@@ -72,6 +73,11 @@ try
 
     builder.Services.AddAuthorization();
 
+    // Rate limiting
+    builder.Services.Configure<RateLimitingSettings>(
+        builder.Configuration.GetSection(RateLimitingSettings.SectionName));
+    builder.Services.AddApiRateLimiting();
+
     var app = builder.Build();
 
     app.UseSerilogRequestLogging();
@@ -83,18 +89,19 @@ try
     // Configure the HTTP request pipeline.
     if (app.Environment.IsDevelopment())
     {
-        app.MapOpenApi();
+        app.MapOpenApi().DisableRateLimiting();
         app.MapScalarApiReference(options =>
         {
             options.Title = "PaymentService API";
             options.Theme = ScalarTheme.Purple;
-        });
+        }).DisableRateLimiting();
     }
 
     app.UseHttpsRedirection();
 
     app.UseAuthentication();
     app.UseAuthorization();
+    app.UseRateLimiter();
 
     app.MapControllers();
     app.MapHealthEndpoints();

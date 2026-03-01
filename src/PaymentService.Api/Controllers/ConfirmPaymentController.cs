@@ -4,7 +4,9 @@ using System.Text.Json;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using PaymentService.Api.Common;
 using PaymentService.Application.Auth.Interfaces;
 using PaymentService.Application.Common;
 using PaymentService.Application.Features.Payments.Commands.ConfirmPayment;
@@ -35,6 +37,7 @@ public sealed class ConfirmPaymentController : ControllerBase
 
     /// <summary>POST /api/payments/{paymentId}/confirm — confirm a pending payment</summary>
     [HttpPost("{paymentId:guid}/confirm")]
+    [EnableRateLimiting(RateLimitingExtensions.PolicyNames.PaymentConfirm)]
     [ProducesResponseType(typeof(PaymentDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

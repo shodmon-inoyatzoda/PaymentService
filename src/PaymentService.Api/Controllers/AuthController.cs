@@ -2,6 +2,8 @@ using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using PaymentService.Api.Common;
 using PaymentService.Application.Auth.DTOs;
 using PaymentService.Application.Auth.Interfaces;
 using PaymentService.Application.Features.Auth.Commands.Login;
@@ -15,6 +17,7 @@ namespace PaymentService.Api.Controllers;
 
 [ApiController]
 [Route("api/auth")]
+[EnableRateLimiting(RateLimitingExtensions.PolicyNames.Auth)]
 public sealed class AuthController : ControllerBase
 {
     private readonly ISender _sender;
