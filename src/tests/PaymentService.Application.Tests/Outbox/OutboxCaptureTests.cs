@@ -111,7 +111,7 @@ public class OutboxCaptureTests : IDisposable
         var types = outboxMessages.Select(m => m.Type).ToList();
         types.Should().Contain(t => t.Contains(nameof(OrderPaidDomainEvent)));
         types.Should().Contain(t => t.Contains(nameof(PaymentSucceededDomainEvent)));
-    }
+        }
 
     [Fact]
     public async Task ConfirmPayment_WhenOrderPaid_OutboxMessageContentContainsOrderId()
